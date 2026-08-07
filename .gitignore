@@ -1,0 +1,15 @@
+# backend
+backend/__pycache__/
+backend/**/__pycache__/
+backend/.pytest_cache/
+backend/patina.db
+backend/instance/
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/.env
+
+# frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env
