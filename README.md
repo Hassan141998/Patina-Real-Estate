@@ -223,13 +223,19 @@ free tiers.
 3. Add environment variables under the service's **Environment** tab:
    - `DATABASE_URL` — paste your Neon connection string
    - `JWT_SECRET_KEY` — any long random string
+   - `SEED_KEY` — any random string (used to seed the database over HTTP —
+     see step 4; Render's free tier has no Shell/SSH access)
    - `CORS_ORIGINS` — your Vercel URL once you have it (step 3), e.g.
      `https://patina.vercel.app` — you can leave this unset at first and
      add it after deploying the frontend
-4. Deploy. Once it's live, open a shell for the service (Render provides
-   one) and run `python seed.py` once to create the tables and demo data
-   in your Neon database. Optionally also run `python fetch_photos.py`
-   with a `PEXELS_API_KEY` env var set.
+4. Deploy. Once it's live, seed the database by visiting (in your browser):
+   ```
+   https://your-backend-url.onrender.com/api/admin/seed?key=YOUR_SEED_KEY
+   ```
+   You should see `{"ok": true, "listings_seeded": 36}`. This works even on
+   Render's free tier, which doesn't support Shell access for running
+   `python seed.py` directly. If your Render plan does include Shell
+   access, running `python seed.py` there works too.
 5. Note your Render URL, e.g. `https://patina-api.onrender.com`.
 
 > **Uploads caveat:** Render's free tier disk isn't permanent storage —

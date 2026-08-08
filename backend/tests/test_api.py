@@ -132,3 +132,29 @@ def test_list_inquiries_requires_auth(client):
     res = client.get("/api/inquiries", headers=headers)
     assert res.status_code == 200
     assert len(res.get_json()) == 1
+
+
+def test_admin_seed_requires_key_configured(client, monkeypatch):
+    monkeypatch.delenv("SEED_KEY", raising=False)
+    res = client.get("/api/admin/seed")
+    assert res.status_code == 503
+
+
+def test_admin_seed_rejects_wrong_key(client, monkeypatch):
+    monkeypatch.setenv("SEED_KEY", "correct-key")
+    res = client.get("/api/admin/seed?key=wrong-key")
+    assert res.status_code == 403
+
+
+def test_admin_seed_refuses_to_overwrite_without_force(client, monkeypatch):
+    monkeypatch.setenv("SEED_KEY", "correct-key")
+    # fixture db already has one listing (TST-001) seeded
+    res = client.get("/api/admin/seed?key=correct-key")
+    assert res.status_code == 409
+
+
+def test_admin_seed_force_reseeds(client, monkeypatch):
+    monkeypatch.setenv("SEED_KEY", "correct-key")
+    res = client.get("/api/admin/seed?key=correct-key&force=true")
+    assert res.status_code == 200
+    assert res.get_json()["listings_seeded"] == 36

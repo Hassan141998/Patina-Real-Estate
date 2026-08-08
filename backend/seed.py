@@ -1,10 +1,13 @@
 """Populate the database with demo listings and a demo agent account.
 
-Usage:
+CLI usage:
     python seed.py
+
+This module also exposes populate(), used by the /api/admin/seed HTTP
+endpoint (see routes/admin.py) — handy on hosts like Render's free tier,
+which don't support Shell/SSH access for running one-off scripts.
 """
 
-from app import create_app
 from extensions import db
 from models import Agent, Listing
 
@@ -346,21 +349,34 @@ LISTINGS = [
 ]
 
 
+def populate():
+    """Wipe and rebuild the listings/agent tables. Must be called inside an
+    active app context (either via seed()'s CLI wrapper, or from within a
+    running Flask request, as routes/admin.py does)."""
+    db.drop_all()
+    db.create_all()
+
+    for data in LISTINGS:
+        db.session.add(Listing(**data))
+
+    agent = Agent(username="agent", name="Dana Whitfield", email="dana@patina.example")
+    agent.set_password("patina2026")
+    db.session.add(agent)
+
+    db.session.commit()
+    return len(LISTINGS)
+
+
 def seed():
+    # Imported here, not at module level, so that routes/admin.py can import
+    # populate() from this module without triggering a circular import
+    # (app.py imports routes/admin.py while it's still being defined).
+    from app import create_app
+
     app = create_app()
     with app.app_context():
-        db.drop_all()
-        db.create_all()
-
-        for data in LISTINGS:
-            db.session.add(Listing(**data))
-
-        agent = Agent(username="agent", name="Dana Whitfield", email="dana@patina.example")
-        agent.set_password("patina2026")
-        db.session.add(agent)
-
-        db.session.commit()
-        print(f"Seeded {len(LISTINGS)} listings and 1 agent account.")
+        count = populate()
+        print(f"Seeded {count} listings and 1 agent account.")
         print("Demo login -> username: agent  password: patina2026")
 
 
